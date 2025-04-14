@@ -103,8 +103,8 @@ final class MovieQuizViewController: UIViewController {
     }
     
     private func setUpImageView() {
-       imageView.layer.masksToBounds = true
-       imageView.layer.borderColor = UIColor.clear.cgColor
+        imageView.layer.masksToBounds = true
+        imageView.layer.borderColor = UIColor.clear.cgColor
     }
     
     private func show (quiz result: QuizResultViewModel) {
