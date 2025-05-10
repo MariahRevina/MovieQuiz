@@ -1,7 +1,5 @@
 import Foundation
 import UIKit
-
-
 struct QuizQuestion {
         let image: String
         let text: String

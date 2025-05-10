@@ -15,39 +15,33 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
     private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
     private var alertPresenter: AlertPresenter?
+    private var statisticService: StatisticServiceProtocol?
     
     // MARK:  - View Life Cycles
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpImageView()
-        
         questionFactory = QuestionFactory(delegate: self)
-        
         questionFactory?.requestNextQuestion()
-        
         alertPresenter = AlertPresenter(delegate: self)
+        statisticService = StatisticService()
     }
     
     // MARK: - QuestionFactoryDelegate
     func didReceiveNextQuestion(question: QuizQuestion?) {
-        
         guard let question = question else {
             return
         }
-        
         currentQuestion = question
         let viewModel = convert(model: question)
         DispatchQueue.main.async { [weak self] in
             self?.show(quiz: viewModel)
         }
     }
-    
     // MARK: - AlertPresenterDelegate
-    
     func present(alert: UIAlertController) {
         self.present(alert, animated: true, completion: nil)
     }
-    
     // MARK:  - IB Actions
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
         guard let currentQuestion = currentQuestion else {
@@ -57,7 +51,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
         showAnswerResult (isCorrect: givenAnswer == currentQuestion.correctAnswer)
         changeStateButton(isEnabled: false)
     }
-    
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         guard let currentQuestion = currentQuestion else {
             return
@@ -66,21 +59,17 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
         showAnswerResult (isCorrect: givenAnswer == currentQuestion.correctAnswer)
         changeStateButton(isEnabled: false)
     }
-    
     // MARK:  - Private Methods
     private func show (quiz step: QuizStepViewModel) {
         imageView.image = step.image
         textLabel.text = step.question
         counterLabel.text = step.questionNumber
     }
-    
     private func setUpImageView() {
         imageView.layer.masksToBounds = true
         imageView.layer.borderColor = UIColor.clear.cgColor
     }
-    
     private func show (quiz result: QuizResultViewModel) {
-        
         guard let alertPresenter = alertPresenter else {
             return
         }
@@ -99,7 +88,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
         )
         alertPresenter.displayAlert(model: alert)
     }
-    
     private func showAnswerResult(isCorrect: Bool) {
         if isCorrect {
             correctAnswers += 1
@@ -115,7 +103,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
             self.setUpImageView()
         }
     }
-    
     private func convert (model: QuizQuestion) -> QuizStepViewModel {
         let questionStep = QuizStepViewModel (
             image: UIImage (named: model.image) ?? UIImage(),
@@ -124,15 +111,23 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
         )
         return questionStep
     }
-    
     private func showNextQuestionOrResults() {
         changeStateButton(isEnabled: true)
         imageView.layer.borderColor = nil
         
         if currentQuestionIndex == questionsAmount - 1 {
-            let text = correctAnswers == questionsAmount ?
-            "Поздравляем, вы ответили на 10 из 10!" :
-            "Вы ответили на \(correctAnswers) из 10, попробуйте ещё раз!"
+            guard let statisticService = statisticService else {return}
+            
+            let gameResult = GameResult (correct: correctAnswers, total: questionsAmount, date: Date())
+            
+            statisticService.store(gameResult: gameResult)
+            
+            let gamesCount = statisticService.gamesCount
+            let bestGame = statisticService.bestGame
+            let totalAccuracy = statisticService.totalAccuracy
+            let date = bestGame.date.dateTimeString
+            
+            let text = "Ваш результат: \(correctAnswers)/\(questionsAmount)\n Количество сыгранных квизов: \(gamesCount) \n Рекорд: \(bestGame.correct)/\(bestGame.total) (\(date)) \n Средняя точность: \(String (format: "%.2f", totalAccuracy))%"
             
             let viewModel = QuizResultViewModel (
                 title: "Этот раунд окончен!",
@@ -144,7 +139,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
             self.questionFactory?.requestNextQuestion()
         }
     }
-    
     private func changeStateButton(isEnabled: Bool) {
         noButton.isEnabled = isEnabled
         yesButton.isEnabled = isEnabled
