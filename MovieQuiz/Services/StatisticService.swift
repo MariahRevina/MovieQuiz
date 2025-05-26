@@ -59,6 +59,7 @@ final class StatisticService: StatisticServiceProtocol {
         if gameResult.compare(result: bestGame) {
             bestGame = gameResult
         }
-        storage.synchronize()
+        storage.set(totalCorrectAnswers, forKey: Keys.totalCorrectAnswers.rawValue)
+        storage.set(totalQuestionAsked, forKey: Keys.totalQuestionAsked.rawValue)
     }
 }
