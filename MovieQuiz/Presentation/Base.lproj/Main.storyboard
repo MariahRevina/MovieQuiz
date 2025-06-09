@@ -99,17 +99,23 @@
                                     </stackView>
                                 </subviews>
                             </stackView>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="medium" translatesAutoresizingMaskIntoConstraints="NO" id="9PZ-Cj-OIK">
+                                <rect key="frame" x="185" y="412" width="20" height="20"/>
+                            </activityIndicatorView>
                         </subviews>
-                        <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
+                        <viewLayoutGuide key="safeArea" id="yby-Hp-l2W"/>
                         <color key="backgroundColor" name="YP Black"/>
                         <constraints>
-                            <constraint firstItem="Ovt-AS-Uq0" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="10" id="2le-DJ-jgu"/>
-                            <constraint firstItem="Ovt-AS-Uq0" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="EYe-HW-IaU"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="Ovt-AS-Uq0" secondAttribute="bottom" id="i1u-SA-aEI"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="Ovt-AS-Uq0" secondAttribute="trailing" constant="20" id="jTv-8L-TTG"/>
+                            <constraint firstItem="Ovt-AS-Uq0" firstAttribute="top" secondItem="yby-Hp-l2W" secondAttribute="top" constant="10" id="2le-DJ-jgu"/>
+                            <constraint firstItem="Ovt-AS-Uq0" firstAttribute="leading" secondItem="yby-Hp-l2W" secondAttribute="leading" constant="20" id="EYe-HW-IaU"/>
+                            <constraint firstItem="9PZ-Cj-OIK" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="XiZ-QI-G8Q"/>
+                            <constraint firstItem="yby-Hp-l2W" firstAttribute="bottom" secondItem="Ovt-AS-Uq0" secondAttribute="bottom" id="i1u-SA-aEI"/>
+                            <constraint firstItem="yby-Hp-l2W" firstAttribute="trailing" secondItem="Ovt-AS-Uq0" secondAttribute="trailing" constant="20" id="jTv-8L-TTG"/>
+                            <constraint firstItem="9PZ-Cj-OIK" firstAttribute="centerX" secondItem="yby-Hp-l2W" secondAttribute="centerX" id="x8u-LL-GSn"/>
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="activityIndicator" destination="9PZ-Cj-OIK" id="IxX-cK-3lk"/>
                         <outlet property="counterLabel" destination="pPZ-Ks-BVr" id="WOe-4h-7sc"/>
                         <outlet property="imageView" destination="SuG-R2-w64" id="d7R-EO-PI6"/>
                         <outlet property="noButton" destination="IRI-U2-NDF" id="WMP-iQ-oYD"/>
