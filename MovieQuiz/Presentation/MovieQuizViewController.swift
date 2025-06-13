@@ -8,6 +8,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
     @IBOutlet private var textLabel: UILabel!
     @IBOutlet private var counterLabel: UILabel!
     
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     // MARK: - Private Properties
     private var currentQuestionIndex:Int = .zero
     private var correctAnswers: Int = .zero
@@ -21,8 +22,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
     override func viewDidLoad(){
         super.viewDidLoad()
         setUpImageView()
-        questionFactory = QuestionFactory(delegate: self)
-        questionFactory?.requestNextQuestion()
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        showLoadingIndicator()
+        questionFactory?.loadData()
         alertPresenter = AlertPresenter(delegate: self)
         statisticService = StatisticService()
     }
@@ -37,6 +39,14 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
         DispatchQueue.main.async{[weak self] in
             self?.show(quiz: viewModel)
         }
+    }
+    func didLoadDataFromServer() {
+        activityIndicator.isHidden = true
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func didFailToLoadData(with error: Error) {
+        showNetworkError(message: error.localizedDescription)
     }
     // MARK: - AlertPresenterDelegate
     func present(alert: UIAlertController){
@@ -60,6 +70,34 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
         changeStateButton(isEnabled: false)
     }
     // MARK: - Private Methods
+    
+    private func showLoadingIndicator(){
+        activityIndicator.isHidden = false
+        activityIndicator.startAnimating()
+    }
+    
+    private func hideLoadingIndicator () {
+        activityIndicator.isHidden = true
+        activityIndicator.stopAnimating()
+    }
+    private func showNetworkError(message: String) {
+        hideLoadingIndicator ()
+        
+        let model = AlertModel(title: "Что-то пошло не так(",
+                               message: "Невозможно загрузить данные",
+                               buttonText: "Попробовать ещё раз",
+                               completion: { [weak self] in
+            guard let self = self else {return}
+            
+            self.currentQuestionIndex = 0
+            self.correctAnswers = 0
+            
+            self.showLoadingIndicator()
+            self.questionFactory?.loadData()
+        })
+        alertPresenter?.displayAlert(model: model)
+    }
+    
     private func show(quiz step: QuizStepViewModel){
         imageView.image = step.image
         textLabel.text = step.question
@@ -88,6 +126,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
         )
         alertPresenter.displayAlert(model:alert)
     }
+    
     private func showAnswerResult(isCorrect:Bool) {
         if isCorrect {
             correctAnswers += 1
@@ -105,7 +144,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
     }
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let questionStep = QuizStepViewModel (
-            image: UIImage (named: model.image) ?? UIImage(),
+            image: UIImage (data: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)"
         )
