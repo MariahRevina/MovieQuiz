@@ -1,6 +1,6 @@
 import Foundation
 
-class QuestionFactory: QuestionFactoryProtocol {
+final class QuestionFactory: QuestionFactoryProtocol {
     private let moviesLoader: MoviesLoading
     private weak var delegate: QuestionFactoryDelegate?
     
@@ -69,29 +69,38 @@ class QuestionFactory: QuestionFactoryProtocol {
         }
     }
     
-    
-    
     func requestNextQuestion () {
         DispatchQueue.global().async { [weak self] in
             guard let self = self else {return}
             let index = (0..<self.movies.count).randomElement() ?? 0
             guard let movie = self.movies[safe: index] else {return}
+            
             var imageData = Data()
             do {
                 imageData = try Data(contentsOf: movie.resizedImageURL)
             }catch{
                 print ("Failed to load image")
             }
+            
             let rating = Float(movie.rating) ?? 0
-            let text = "Рейтинг этого фильма больше чем 8,5?"
-            let correctanswer  = rating > 8.5
+            
+            let compare = Bool.random() ? "больше" : "меньше"
+            
+            let ratingForQuestion = Int(rating.rounded())
+            
+            let text = "Рейтинг этого фильма \(compare) чем \(ratingForQuestion)?"
+            
+            let correctanswer  = compare == "больше"
+            ? rating > Float(ratingForQuestion)
+            : rating < Float(ratingForQuestion)
+            
             let question = QuizQuestion(
-                image:imageData,
+                image: imageData,
                 text: text,
                 correctAnswer: correctanswer
             )
             DispatchQueue.main.async { [weak self] in
-                guard let self = self else {return}
+                guard let self else {return}
                 self.delegate?.didReceiveNextQuestion(question: question)
             }
         }
