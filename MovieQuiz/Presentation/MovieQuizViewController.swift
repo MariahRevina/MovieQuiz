@@ -20,6 +20,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
     // MARK: - View Life Cycles
     override func viewDidLoad(){
         super.viewDidLoad()
+        
+        presenter.viewController = self
         setUpImageView()
         questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
         showLoadingIndicator()
@@ -53,20 +55,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
     }
     // MARK: - IB Actions
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        guard let currentQuestion = currentQuestion else{
-            return
-        }
-        let givenAnswer = true
-        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-        changeStateButton(isEnabled: false)
+        presenter.currentQuestion = currentQuestion
+        presenter.yesButtonClicked()
     }
     @IBAction private func noButtonClicked(_ sender: UIButton) {
-        guard let currentQuestion = currentQuestion else {
-            return
-        }
-        let givenAnswer = false
-        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-        changeStateButton(isEnabled: false)
+        presenter.currentQuestion = currentQuestion
+        presenter.noButtonClicked()
     }
     // MARK: - Private Methods
     
@@ -126,7 +120,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
         alertPresenter.displayAlert(model:alert)
     }
     
-    private func showAnswerResult(isCorrect:Bool) {
+     func showAnswerResult(isCorrect:Bool) {
         if isCorrect {
             correctAnswers += 1
         }
@@ -169,7 +163,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
             self.questionFactory?.requestNextQuestion()
         }
     }
-    private func changeStateButton(isEnabled: Bool) {
+     func changeStateButton(isEnabled: Bool) {
         noButton.isEnabled = isEnabled
         yesButton.isEnabled = isEnabled
     }
