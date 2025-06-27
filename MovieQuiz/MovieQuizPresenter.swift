@@ -1,6 +1,13 @@
 import UIKit
 
 final class MovieQuizPresenter {
+    var alertPresenter:AlertPresenter?
+     var correctAnswers: Int = .zero
+    
+    var questionFactory: QuestionFactoryProtocol?
+
+    var statisticService: StatisticServiceProtocol?
+    
     var currentQuestion:QuizQuestion?
     
     weak var viewController: MovieQuizViewController?
@@ -30,20 +37,57 @@ final class MovieQuizPresenter {
     }
     
      func yesButtonClicked() {
-        guard let currentQuestion = currentQuestion else{
-            return
-        }
-        let givenAnswer = true
-         viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-         viewController?.changeStateButton(isEnabled: false)
+         didAnswer(isYes: true)
     }
     
     func noButtonClicked() {
-        guard let currentQuestion = currentQuestion else {
-            return
-        }
-        let givenAnswer = false
+        didAnswer(isYes: false)
+    }
+    
+    private func didAnswer(isYes: Bool) {
+        guard let currentQuestion else {return}
+        let givenAnswer = isYes
         viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
         viewController?.changeStateButton(isEnabled: false)
+    }
+    
+    func didReceiveNextQuestion(question: QuizQuestion?){
+        guard let question else{
+            return
+        }
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        DispatchQueue.main.async{[weak self] in
+            self?.viewController?.show(quiz: viewModel)
+        }
+    }
+    
+    func showNextQuestionOrResults() {
+        viewController?.changeStateButton(isEnabled: true)
+        viewController?.resetBorder()
+        
+        if self.isLastQuestion() {
+            /* guard let statisticService = statisticService else {return}
+            
+            let gameResult = GameResult(correct: correctAnswers, total: questionsAmount, date: Date())
+            
+            statisticService.store(gameResult: gameResult)
+            
+            let gamesCount = statisticService.gamesCount
+            let bestGame = statisticService.bestGame
+            let totalAccuracy = statisticService.totalAccuracy
+            let date = bestGame.date.dateTimeString
+            
+            let text = "Ваш результат: \(correctAnswers)/\(self.questionsAmount)\n Количество сыгранных квизов: \(gamesCount) \n Рекорд: \(bestGame.correct)/\(bestGame.total) (\(date)) \n Средняя точность: \(String (format: "%.2f", totalAccuracy))%" */
+            let text = "Вы ответили на \(correctAnswers) из 10, попробуйте ещё раз!"
+            let viewModel = QuizResultViewModel (
+                title: "Этот раунд окончен!",
+                text: text,
+                buttonText: "Сыграть ещё раз")
+            viewController?.show(quiz: viewModel)
+        } else{
+            self.switchToNextQuestion()
+            questionFactory?.requestNextQuestion()
+        }
     }
 }
