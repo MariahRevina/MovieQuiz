@@ -1,6 +1,6 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,AlertPresenterDelegate {
+final class MovieQuizViewController: UIViewController, AlertPresenterDelegate {
     // MARK: - IB Outlets
     @IBOutlet private var yesButton: UIButton!
     @IBOutlet private var noButton: UIButton!
@@ -10,9 +10,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
     
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     // MARK: - Private Properties
-    private let presenter = MovieQuizPresenter()
-    private var correctAnswers: Int = .zero
-    private var questionFactory: QuestionFactoryProtocol?
+    private var presenter: MovieQuizPresenter!
     private var alertPresenter:AlertPresenter?
     private var statisticService: StatisticServiceProtocol?
     
@@ -20,27 +18,15 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
     override func viewDidLoad(){
         super.viewDidLoad()
         
-        presenter.viewController = self
+        presenter = MovieQuizPresenter (viewController: self)
         setUpImageView()
-        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        //questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
         showLoadingIndicator()
-        questionFactory?.loadData()
+        //questionFactory?.loadData()
         alertPresenter = AlertPresenter(delegate: self)
         statisticService = StatisticService()
     }
-    
-    // MARK: - QuestionFactoryDelegate
-   func didReceiveNextQuestion(question: QuizQuestion?){
-       presenter.didReceiveNextQuestion(question: question)
-        }
-    func didLoadDataFromServer() {
-        activityIndicator.isHidden = true
-        questionFactory?.requestNextQuestion()
-    }
-    
-    func didFailToLoadData(with error: Error) {
-        showNetworkError(message: error.localizedDescription)
-    }
+
     // MARK: - AlertPresenterDelegate
     func present(alert: UIAlertController){
         self.present(alert, animated: true, completion: nil)
@@ -54,16 +40,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
     }
     // MARK: - Private Methods
     
-    private func showLoadingIndicator(){
+   func showLoadingIndicator(){
         activityIndicator.isHidden = false
         activityIndicator.startAnimating()
     }
     
-    private func hideLoadingIndicator () {
+    func hideLoadingIndicator () {
         activityIndicator.isHidden = true
         activityIndicator.stopAnimating()
     }
-    private func showNetworkError(message: String) {
+    func showNetworkError(message: String) {
         hideLoadingIndicator ()
         
         let model = AlertModel(title: "Что-то пошло не так(",
@@ -72,11 +58,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
                                completion: { [weak self] in
             guard let self = self else {return}
             
-            self.presenter.resetQuestionIndex()
-            self.correctAnswers = 0
-            
+            self.presenter.restartGame()
             self.showLoadingIndicator()
-            self.questionFactory?.loadData()
         })
         alertPresenter?.displayAlert(model: model)
     }
@@ -94,6 +77,19 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
         guard let alertPresenter = alertPresenter else {
             return
         }
+        guard let statisticService = statisticService else {return}
+        
+        let gameResult = GameResult(correct: presenter.correctAnswers, total: presenter.questionsAmount, date: Date())
+        
+        statisticService.store(gameResult: gameResult)
+        
+        let gamesCount = statisticService.gamesCount
+        let bestGame = statisticService.bestGame
+        let totalAccuracy = statisticService.totalAccuracy
+        let date = bestGame.date.dateTimeString
+        
+        let text = "Ваш результат: \(presenter.correctAnswers)/\(presenter.questionsAmount)\n Количество сыгранных квизов: \(gamesCount) \n Рекорд: \(bestGame.correct)/\(bestGame.total) (\(date)) \n Средняя точность: \(String (format: "%.2f", totalAccuracy))%"
+        
         let alert = AlertModel(
             title: result.title,
             message: result.text,
@@ -101,26 +97,20 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate,A
             completion: { [weak self] in
                 guard let self = self else{return}
                 
-                presenter.resetQuestionIndex()
-                self.correctAnswers = 0
-                
-                questionFactory?.requestNextQuestion()
+                self.presenter.restartGame()
             }
         )
         alertPresenter.displayAlert(model:alert)
     }
     
      func showAnswerResult(isCorrect:Bool) {
-        if isCorrect {
-            correctAnswers += 1
-        }
+        
+            presenter.didAnswer(isCorrectAnswer:isCorrect)
         imageView.layer.borderWidth = 8
         imageView.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {[weak self] in
             guard let self = self else {return}
-            self.presenter.correctAnswers = self.correctAnswers
-            self.presenter.questionFactory = self.questionFactory
             self.presenter.showNextQuestionOrResults()
             self.setUpImageView()
         }
