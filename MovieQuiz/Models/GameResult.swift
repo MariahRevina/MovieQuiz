@@ -9,4 +9,3 @@ struct GameResult {
         correct > result.correct
         }
     }
-
