@@ -38,6 +38,8 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         }
     }
     
+    // MARK: - Public methods
+    
     func makeResultsMessage() -> String {
         let gameResult = GameResult(correct: self.correctAnswers, total: self.questionsAmount, date: Date())
         statisticService.store(gameResult: gameResult)
@@ -87,13 +89,6 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         didAnswer(isYes: false)
     }
     
-    private func didAnswer(isYes: Bool) {
-        guard let currentQuestion else {return}
-        let givenAnswer = isYes
-        self.proceedWithAnswer(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-        viewController?.changeStateButton(isEnabled: false)
-    }
-    
     func didAnswer(isCorrectAnswer: Bool) {
         if isCorrectAnswer {
             correctAnswers += 1
@@ -110,6 +105,15 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
             self?.viewController?.show(quiz: viewModel)
         }
     }
+    // MARK: - Private methods
+    
+    private func didAnswer(isYes: Bool) {
+        guard let currentQuestion else {return}
+        let givenAnswer = isYes
+        self.proceedWithAnswer(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+        viewController?.changeStateButton(isEnabled: false)
+    }
+    
     private func proceedWithAnswer(isCorrect:Bool) {
         didAnswer(isCorrectAnswer:isCorrect)
         viewController?.highlightImageBorder(isCorrectAnswer: isCorrect)
@@ -119,6 +123,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
             viewController?.setUpImageView()
         }
     }
+    
     private func proceedToNextQuestionOrResults() {
         viewController?.changeStateButton(isEnabled: true)
         viewController?.resetBorder()
