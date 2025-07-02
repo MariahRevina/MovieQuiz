@@ -2,11 +2,11 @@ import UIKit
 
 final class MovieQuizViewController: UIViewController, AlertPresenterDelegate, MovieQuizViewControllerProtocol {
     // MARK: - IB Outlets
-    @IBOutlet private var yesButton: UIButton!
-    @IBOutlet private var noButton: UIButton!
-    @IBOutlet private var imageView: UIImageView!
-    @IBOutlet private var textLabel: UILabel!
-    @IBOutlet private var counterLabel: UILabel!
+    @IBOutlet private weak var yesButton: UIButton!
+    @IBOutlet private weak var noButton: UIButton!
+    @IBOutlet private weak var imageView: UIImageView!
+    @IBOutlet private weak var textLabel: UILabel!
+    @IBOutlet private weak var counterLabel: UILabel!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     // MARK: - Private Properties
     private var presenter: MovieQuizPresenter!
